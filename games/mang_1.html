@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>🍌🍎 Catch Game: UFO AI + Themes</title>
+
+    <link rel="stylesheet" href="../style/styles.css" />
+
+    <style>
+        html,
+        body {
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+            height: 100%;
+        }
+
+        canvas {
+            display: block;
+            touch-action: none;
+        }
+
+        #themeSelector {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            z-index: 10;
+            font-size: 18px;
+        }
+    </style>
+</head>
+
+<body>
+
+<!--
+    <header>
+        <a href="../index.html">
+            <h1>PlayVerse</h1>
+        </a>
+        <nav>
+            <a href="../index.html">Home</a>
+            <a href="../games.html">Games</a>
+            <a href="../about.html">About</a>
+            <a href="../contact.html">Contact</a>
+        </nav>
+    </header>
+-->
+
+    <select id="themeSelector">
+        <option value="day">☀️ Day</option>
+        <option value="night">🌙 Night</option>
+        <option value="jungle">🌴 Jungle</option>
+        <option value="retro">🕹️ Retro</option>
+    </select>
+
+    <canvas id="gameCanvas" width="400" height="600"></canvas>
+
+    <script>
+        const canvas = document.getElementById("gameCanvas");
+        const ctx = canvas.getContext("2d");
+        const themeSelector = document.getElementById("themeSelector");
+
+        const basketSkins = ["🧺", "🐱", "🚀"];
+        let currentSkinIndex = 0;
+        const basket = { x: 100, y: 0, size: 50 };
+
+        const ufo = { x: 0, y: 50, width: 60, height: 30, dropTimer: 0 };
+        let apples = [], explosions = [], bombs = [];
+        let score = 0, lives = 3, timeLeft = 60, highScore = localStorage.getItem("catchHighScore") || 0;
+        let gameRunning = false, gameOver = false, shakeTime = 0;
+
+        let currentTheme = "day";
+
+        const emojiTypes = [
+            { emoji: "🍎", score: 1 },
+            { emoji: "🍌", score: 3 }
+        ];
+
+        function resizeCanvas() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+            basket.y = canvas.height - 60;
+        }
+        window.addEventListener("resize", resizeCanvas);
+        resizeCanvas();
+
+        function createApple() {
+            const type = emojiTypes[Math.floor(Math.random() * emojiTypes.length)];
+            apples.push({ x: Math.random() * canvas.width, y: 0, speed: 3, ...type });
+        }
+
+        function dropBomb(x) {
+            bombs.push({ x, y: 60, emoji: "🧨", speed: 4 });
+        }
+
+        function drawEmoji(emoji, x, y, size = 30) {
+            ctx.font = `${size}px serif`;
+            ctx.fillText(emoji, x, y);
+        }
+
+        function drawExplosion(explosion) {
+            ctx.fillStyle = `rgba(255,0,0,${explosion.alpha})`;
+            ctx.beginPath();
+            ctx.arc(explosion.x, explosion.y, explosion.radius, 0, Math.PI * 2);
+            ctx.fill();
+        }
+
+        function drawBackground() {
+            switch (currentTheme) {
+                case "day": ctx.fillStyle = "#d0f0c0"; break;
+                case "night": ctx.fillStyle = "#001d3d"; break;
+                case "jungle": ctx.fillStyle = "#228b22"; break;
+                case "retro": ctx.fillStyle = "#333"; break;
+            }
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+        }
+
+        function applyShake() {
+            if (shakeTime > 0) {
+                ctx.translate(Math.random() * 10 - 5, Math.random() * 10 - 5);
+                shakeTime--;
+            }
+        }
+
+        function updateGame() {
+            if (!gameRunning) return;
+            ctx.save();
+            drawBackground();
+            applyShake();
+
+            // Move UFO
+            ufo.x += (basket.x - ufo.x) * 0.05;
+            ufo.dropTimer--;
+            if (ufo.dropTimer <= 0) {
+                dropBomb(ufo.x + 20);
+                ufo.dropTimer = 60 + Math.random() * 60;
+            }
+            drawEmoji("🛸", ufo.x, ufo.y);
+
+            // Draw basket
+            drawEmoji(basketSkins[currentSkinIndex], basket.x, basket.y);
+
+            // Apples
+            apples.forEach((a, i) => {
+                a.y += a.speed;
+                drawEmoji(a.emoji, a.x, a.y);
+                if (a.y > basket.y - 20 && a.x > basket.x - 20 && a.x < basket.x + 40) {
+                    score += a.score;
+                    apples.splice(i, 1);
+                }
+            });
+
+            // Bombs
+            bombs.forEach((b, i) => {
+                b.y += b.speed;
+                drawEmoji(b.emoji, b.x, b.y);
+                if (b.y > basket.y - 20 && b.x > basket.x - 20 && b.x < basket.x + 40) {
+                    lives--;
+                    explosions.push({ x: b.x, y: b.y, radius: 10, alpha: 1 });
+                    shakeTime = 5;
+                    bombs.splice(i, 1);
+                }
+            });
+
+            // Explosions
+            explosions.forEach((ex, i) => {
+                ex.radius += 2;
+                ex.alpha -= 0.05;
+                drawExplosion(ex);
+                if (ex.alpha <= 0) explosions.splice(i, 1);
+            });
+
+            // UI
+            ctx.fillStyle = "#fff";
+            ctx.font = "20px sans-serif";
+            ctx.fillText(`Score: ${score}`, 10, 30);
+            ctx.fillText(`Lives: ${lives}`, 10, 60);
+            ctx.fillText(`Time: ${timeLeft}s`, 10, 90);
+            ctx.fillText(`High Score: ${highScore}`, 10, 120);
+
+            ctx.restore();
+
+            if (lives <= 0 || timeLeft <= 0) {
+                gameRunning = false;
+                gameOver = true;
+                if (score > highScore) {
+                    highScore = score;
+                    localStorage.setItem("catchHighScore", highScore);
+                }
+            }
+        }
+
+        function gameLoop() {
+            if (gameRunning) {
+                updateGame();
+                if (Math.random() < 0.03) createApple();
+            } else {
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                drawBackground();
+                ctx.fillStyle = "#fff";
+                ctx.font = "40px sans-serif";
+                ctx.textAlign = "center";
+                ctx.fillText(gameOver ? "💥 Game Over 💥" : "🍌 Catch the Fruit! 🧨 Avoid Bombs!", canvas.width / 2, canvas.height / 2 - 30);
+                ctx.font = "24px sans-serif";
+                if (gameOver) {
+                    ctx.fillText(`Score: ${score}`, canvas.width / 2, canvas.height / 2 + 10);
+                    ctx.fillText(`High Score: ${highScore}`, canvas.width / 2, canvas.height / 2 + 40);
+                }
+                ctx.fillText("Click/Tap to Start or Change Basket (🧺🐱🚀)", canvas.width / 2, canvas.height / 2 + 90);
+                
+            }
+        }
+
+        setInterval(gameLoop, 30);
+
+        let timerInterval = null;
+        function startTimer() {
+            timeLeft = 60;
+            clearInterval(timerInterval);
+            timerInterval = setInterval(() => {
+                if (gameRunning) timeLeft--;
+                if (timeLeft <= 0) clearInterval(timerInterval);
+            }, 1000);
+        }
+
+        canvas.addEventListener("mousemove", (e) => {
+            if (gameRunning) {
+                basket.x = e.clientX - basket.size / 2;
+            }
+        });
+
+        canvas.addEventListener("touchmove", (e) => {
+            if (gameRunning && e.touches.length > 0) {
+                basket.x = e.touches[0].clientX - basket.size / 2;
+            }
+        }, { passive: false });
+
+        canvas.addEventListener("click", () => {
+            if (!gameRunning) {
+                score = 0; lives = 3; timeLeft = 60;
+                apples = []; bombs = []; explosions = [];
+                gameRunning = true; gameOver = false;
+                shakeTime = 0;
+                startTimer();
+            } else {
+                currentSkinIndex = (currentSkinIndex + 1) % basketSkins.length;
+            }
+        });
+
+        themeSelector.addEventListener("change", () => {
+            currentTheme = themeSelector.value;
+        });
+    </script>
+</body>
+
+</html>

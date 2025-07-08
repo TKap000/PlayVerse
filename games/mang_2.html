@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Race Game</title>
+
+    <link rel="stylesheet" href="../style/styles.css" />
+
+    <style>
+        /* Keep these styles here or move them to your external CSS */
+        body {
+            font-family: sans-serif;
+            background: #111;
+            color: #fff;
+            text-align: center;
+            margin: 0;
+            padding: 0;
+        }
+
+        header {
+            background: #222;
+            padding: 15px 0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            color: white;
+            max-width: 900px;
+            margin: 0 auto 30px;
+            padding: 15px 20px;
+        }
+
+        header a {
+            color: white;
+            text-decoration: none;
+            margin: 0 10px;
+        }
+
+        header h1 {
+            margin: 0;
+            font-size: 1.8rem;
+        }
+
+        nav a:hover {
+            text-decoration: underline;
+        }
+
+        h1.game-title {
+            margin-top: 0;
+        }
+
+        .track {
+            margin: 30px auto;
+            width: 90%;
+            height: 60px;
+            background: #333;
+            border: 2px solid #555;
+            position: relative;
+            overflow: hidden;
+            border-radius: 10px;
+        }
+
+        .car {
+            width: 50px;
+            height: 50px;
+            position: absolute;
+            top: 5px;
+            transition: left 0.1s;
+        }
+
+        .car1 {
+            background: red;
+        }
+
+        .car2 {
+            background: blue;
+            top: 65px;
+        }
+
+        .game-area {
+            position: relative;
+            height: 140px;
+            max-width: 900px;
+            margin: 0 auto;
+        }
+
+        .winner {
+            font-size: 2em;
+            color: lime;
+            margin-top: 20px;
+        }
+    </style>
+</head>
+
+<body>
+
+    <header>
+        <a href="../index.html">
+            <h1>PlayVerse</h1>
+        </a>
+        <nav>
+            <a href="../index.html">Home</a>
+            <a href="../games.html">Games</a>
+            <a href="../about.html">About</a>
+            <a href="../contact.html">Contact</a>
+        </nav>
+    </header>
+
+    <h1 class="game-title">🚗 Race Game</h1>
+    <p>Player 1: Press "A" | Player 2: Press "L"</p>
+
+    <div class="game-area">
+        <div class="track">
+            <div class="car car1" id="car1"></div>
+        </div>
+        <div class="track">
+            <div class="car car2" id="car2"></div>
+        </div>
+    </div>
+
+    <div class="winner" id="winner"></div>
+
+    <script>
+        const car1 = document.getElementById("car1");
+        const car2 = document.getElementById("car2");
+        const winnerText = document.getElementById("winner");
+
+        let car1Pos = 0;
+        let car2Pos = 0;
+        const finishLine = window.innerWidth - 100;
+
+        function checkWinner() {
+            if (car1Pos >= finishLine) {
+                winnerText.textContent = "🏆 Player 1 Wins!";
+                document.removeEventListener("keydown", handleKeydown);
+            } else if (car2Pos >= finishLine) {
+                winnerText.textContent = "🏆 Player 2 Wins!";
+                document.removeEventListener("keydown", handleKeydown);
+            }
+        }
+
+        function handleKeydown(e) {
+            if (e.key.toLowerCase() === "a") {
+                car1Pos += 20;
+                car1.style.left = car1Pos + "px";
+            } else if (e.key.toLowerCase() === "l") {
+                car2Pos += 20;
+                car2.style.left = car2Pos + "px";
+            }
+            checkWinner();
+        }
+
+        document.addEventListener("keydown", handleKeydown);
+    </script>
+
+</body>
+
+</html>

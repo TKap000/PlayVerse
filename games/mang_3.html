@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Puzzle Mania</title>
+
+    <link rel="stylesheet" href="../style/styles.css" />
+
+    <style>
+        body {
+            font-family: 'Segoe UI', sans-serif;
+            background: #f0f8ff;
+            color: #333;
+            text-align: center;
+            padding: 50px;
+        }
+
+        #game-container {
+            background: #fff;
+            border-radius: 12px;
+            padding: 30px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+            display: inline-block;
+            max-width: 500px;
+        }
+
+        input {
+            padding: 10px;
+            margin-top: 10px;
+            font-size: 16px;
+        }
+
+        button {
+            padding: 10px 20px;
+            font-size: 16px;
+            margin-top: 10px;
+            cursor: pointer;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 8px;
+        }
+
+        button:hover {
+            background-color: #45a049;
+        }
+
+        .info {
+            margin: 10px 0;
+            font-weight: bold;
+        }
+    </style>
+</head>
+
+<body>
+
+    <header>
+        <a href="../index.html">
+            <h1>PlayVerse</h1>
+        </a>
+        <nav>
+            <a href="../index.html">Home</a>
+            <a href="../games.html">Games</a>
+            <a href="../about.html">About</a>
+            <a href="../contact.html">Contact</a>
+        </nav>
+    </header>
+
+    <div id="game-container">
+        <h1>Puzzle Mania</h1>
+        <p>Solve tricky puzzles and unlock new levels in this brain-teasing game!</p>
+
+        <div class="info">
+            ⏱️ Time: <span id="timer">0</span> seconds |
+            🧠 Score: <span id="score">0</span>
+        </div>
+
+        <div id="puzzle-area">
+            <p id="puzzle-question">Loading puzzle...</p>
+            <input type="text" id="user-answer" placeholder="Your answer here" />
+            <br>
+            <button onclick="checkAnswer()">Submit</button>
+            <p id="feedback"></p>
+        </div>
+    </div>
+
+    <script>
+        const puzzles = [
+            {
+                question: "Level 1: What is 5 + 7?",
+                answer: "12"
+            },
+            {
+                question: "Level 2: What word becomes shorter when you add two letters to it?",
+                answer: "short"
+            },
+            {
+                question: "Level 3: I speak without a mouth and hear without ears. What am I?",
+                answer: "echo"
+            }
+        ];
+
+        let currentLevel = 0;
+        let score = 0;
+        let startTime;
+        let timerInterval;
+
+        function updateDisplay() {
+            document.getElementById("score").innerText = score;
+        }
+
+        function startTimer() {
+            startTime = Date.now();
+            clearInterval(timerInterval);
+            timerInterval = setInterval(() => {
+                const seconds = Math.floor((Date.now() - startTime) / 1000);
+                document.getElementById("timer").innerText = seconds;
+            }, 1000);
+        }
+
+        function stopTimer() {
+            clearInterval(timerInterval);
+            return Math.floor((Date.now() - startTime) / 1000);
+        }
+
+        function loadPuzzle() {
+            const puzzle = puzzles[currentLevel];
+            document.getElementById("puzzle-question").innerText = puzzle.question;
+            document.getElementById("user-answer").value = "";
+            document.getElementById("feedback").innerText = "";
+            document.getElementById("timer").innerText = "0";
+            startTimer();
+        }
+
+        function checkAnswer() {
+            const userAnswer = document.getElementById("user-answer").value.trim().toLowerCase();
+            const correctAnswer = puzzles[currentLevel].answer.toLowerCase();
+
+            if (userAnswer === correctAnswer) {
+                const timeTaken = stopTimer();
+                let points = Math.max(1, 10 - Math.floor(timeTaken / 5));
+                score += points;
+                updateDisplay();
+
+                currentLevel++;
+                if (currentLevel < puzzles.length) {
+                    document.getElementById("feedback").innerText = `✅ Correct! +${points} points. Next level loading...`;
+                    setTimeout(loadPuzzle, 1500);
+                } else {
+                    document.getElementById("puzzle-area").innerHTML = `
+            <h2>🎉 Congratulations! You completed all levels!</h2>
+            <p>Your final score: <strong>${score}</strong></p>
+          `;
+                }
+            } else {
+                document.getElementById("feedback").innerText = "❌ Incorrect. Try again!";
+            }
+        }
+
+        // Start game
+        updateDisplay();
+        loadPuzzle();
+
+        // Allow Enter key to submit answer
+        document.getElementById("user-answer").addEventListener("keydown", function (e) {
+            if (e.key === "Enter") {
+                checkAnswer();
+            }
+        });
+
+
+
+    </script>
+</body>
+
+</html>
